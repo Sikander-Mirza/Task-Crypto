@@ -13,6 +13,9 @@ const productrepo={
     },
     update: async(id,data)=>{
       return await ProductModel.findByIdAndUpdate(id,data)
+    },
+    single: async(id)=>{
+      return await ProductModel.findById(id)
     }
   
 }
