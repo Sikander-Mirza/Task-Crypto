@@ -1,21 +1,22 @@
-import { DataTypes } from "sequelize";
-import sequelize from "../Infractructure/db.mjs";
+import mongoose from 'mongoose';
 
-const ProductModel = sequelize.define("Product", {
-  id: {
-    type: DataTypes.INTEGER,  // Integer type for ID
-    autoIncrement: true,  // Auto-increment the ID
-    primaryKey: true  // Set as primary key
+const stockSchema = new mongoose.Schema({
+  product: {
+    type: String,
+    required: true, // Ensure product field is required
   },
-  Product:{
-    type:DataTypes.STRING
+  amount: {
+    type: Number,
+    required: true, // Ensure amount field is required
   },
-  Quantity:{
-    type:DataTypes.INTEGER
+  price: {
+    type: mongoose.Types.Decimal128, // Use Decimal128 to handle precise monetary values
+    required: true, // Ensure price field is required
   },
-  Price: {
-    type: DataTypes.DECIMAL, // Updated to DECIMAL for better handling of monetary values
-  },
-})
+}, {
+  timestamps: true, // Optional: Adds createdAt and updatedAt timestamps
+});
 
-export default ProductModel;
+const StockModel = mongoose.model('Stock', stockSchema);
+
+export default StockModel;
