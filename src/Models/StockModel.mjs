@@ -11,7 +11,7 @@ const stockSchema = new mongoose.Schema({
   },
   price: {
     type: mongoose.Types.Decimal128, // Use Decimal128 to handle precise monetary values
-    required: true, // Ensure price field is required
+     // Ensure price field is required
   },
 }, {
   timestamps: true, // Optional: Adds createdAt and updatedAt timestamps

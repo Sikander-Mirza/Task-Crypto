@@ -4,6 +4,7 @@ import ConnectDB from "./Infractructure/db.mjs";
 import authRoutes from "./Routes/authRoute.mjs";   
 import productRoutes from "./Routes/productRoute.mjs"
 import stockRoutes from "./Routes/stockRoute.mjs"
+import paymentRoutes from "./Routes/paymentRoute.mjs"
 const app = express();
 
 
@@ -14,6 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 productRoutes(app);
 authRoutes(app);
 stockRoutes(app);
+paymentRoutes(app)
 
 
 app.get("/", (req, res) => {

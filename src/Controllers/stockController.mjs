@@ -1,73 +1,74 @@
 import stockrepo from "../Repository/stockRepo.mjs";
-import csv from 'csv-parser'; // To parse CSV files
 import fs from 'fs';
+import xlsx from 'xlsx'; // Library to handle Excel files
 
-    const Stock={
+const Stock = {
+  // Admin creation function
+  createstock: async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded." });
+      }
 
+      const excelFilePath = req.file.path; // Get the path of the uploaded file
 
-    // Admin creation function
-    createstock: async (req, res) => {
-        try {
-            if (!req.file) {
-                return res.status(400).json({ message: "No file uploaded." });
-            }
-    
-            const csvFilePath = req.file.path; // Get the path of the uploaded file
-            const stockData = [];
-    
-            // Stream the CSV file and parse it
-            fs.createReadStream(csvFilePath)
-                .pipe(csv()) // Use the csv-parser library
-                .on('data', (row) => {
-                    // Push each row from the CSV into the stockData array
-                    stockData.push({
-                        product: row.product, // Assuming CSV has columns 'product'
-                        amount: row.amount,   // Assuming CSV has columns 'amount'
-                        price: row.price,     // Assuming CSV has columns 'price'
-                    });
-                })
-                .on('end', async () => {
-                    try {
-                        // Save the parsed data to MongoDB
-                        const savedProducts = await stockrepo.save(stockData);
-                        return res.status(201).json(savedProducts); // Return the created stock items
-                    } catch (error) {
-                        console.error('Error saving products to DB:', error);
-                        return res.status(500).json({ message: "Server error while saving data" });
-                    }
-                })
-                .on('error', (error) => {
-                    console.error('Error reading CSV file:', error);
-                    return res.status(500).json({ message: "Error processing CSV file" });
-                });
-    
-        } catch (error) {
-            console.error('Error during stock creation:', error);
-            return res.status(500).json({ message: "Server error" });
-        }
-    },
+      // Read the uploaded Excel file
+      const workbook = xlsx.readFile(excelFilePath);
+      const sheetName = workbook.SheetNames[0]; // Read the first sheet
+      const worksheet = workbook.Sheets[sheetName];
 
-    Getstock: async(req,res)=>{
+      // Convert the sheet data to JSON format
+      const stockData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
 
-        try{
+      if (stockData.length === 0) {
+        return res.status(400).json({ message: "The Excel file is empty." });
+      }
 
-            const users = await stockrepo.show()
-            if(!users){
+      // Assuming the first row is the header, extract headers and map the data
+      const [headers, ...rows] = stockData;
 
-                return res.status(404).json({message:"No users found"})
-            }
-            return res.status(200).json(users)
+      // Expected headers: product, amount, price (adjust based on your needs)
+      const productIndex = headers.indexOf('product');
+      const amountIndex = headers.indexOf('amount');
+      const priceIndex = headers.indexOf('price');
 
-        }catch(error){
+      if (productIndex === -1 || amountIndex === -1 || priceIndex === -1) {
+        return res.status(400).json({ message: "Invalid Excel format. Expected columns: product, amount, price" });
+      }
 
-            console.log(error)
+      const formattedData = rows.map(row => ({
+        product: row[productIndex],
+        amount: row[amountIndex],
+        price: row[priceIndex]
+      }));
 
-        }
-    },
-    
+      try {
+        // Save the parsed data to MongoDB
+        const savedProducts = await stockrepo.save(formattedData);
+        return res.status(201).json(savedProducts); // Return the created stock items
+      } catch (error) {
+        console.error('Error saving products to DB:', error);
+        return res.status(500).json({ message: "Server error while saving data" });
+      }
+    } catch (error) {
+      console.error('Error during stock creation:', error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  },
 
-    
-    
-}
+  // Get stock function
+  Getstock: async (req, res) => {
+    try {
+      const products = await stockrepo.show();
+      if (!products) {
+        return res.status(404).json({ message: "No products found" });
+      }
+      return res.status(200).json(products);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  },
+};
 
 export default Stock;
