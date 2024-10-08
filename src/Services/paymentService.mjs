@@ -1,92 +1,46 @@
-import crypto from 'crypto';
-import axios from 'axios';
-import qs from 'qs';
+import axios from "axios";
 
-// CoinPayments API Keys (Replace with your actual keys)
-const PUBLIC_KEY = '1f4b4376549fa3a00db0c1ec3dd646cd786d93f7abc646ef9cf4f41ad7d0d84f';
-const PRIVATE_KEY = 'B550Fb539C5621E85E9003dc73F024b3a192CC0Deeea1DFc7bd011eeac994148';
+const API_KEY = 'nRt04gZqgkmWO1ywxMuTSURILovYxSV1ZNI6lu3ZbpdiIJ9eSH5ech36qmorT_UR'; // Plisio API key
 
-// Function to create an HMAC signature for CoinPayments API
-const createHMAC = (params) => {
-  const queryString = qs.stringify(params);
-  return crypto
-    .createHmac('sha512', PRIVATE_KEY)
-    .update(queryString)
-    .digest('hex');
-};
+const paymentService = {
+  createPayment: async (amount, currency, order_id, order_name) => {
+    // Prepare the API request to Plisio
+    const options = {
+      method: 'GET',
+      url: `https://plisio.net/api/v1/invoices/new`,
+      params: {
+        api_key: API_KEY,
+        amount,
+        currency,
+        order_number: order_id,
+        order_name, // Add the order_name parameter here
+      },
+      timeout: 5000, // Set a timeout of 5 seconds
+    };
 
-// Fetch supported coins from CoinPayments
-export const getSupportedCoins = async () => {
-  const params = {
-    version: 1,
-    cmd: 'rates',
-    key: PUBLIC_KEY,
-    accepted: 1,
-    format: 'json',
-  };
+    try {
+      const response = await axios(options);
 
-  const hmac = createHMAC(params);
-
-  try {
-    const response = await axios.post(
-      'https://www.coinpayments.net/api.php',
-      qs.stringify(params),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'HMAC': hmac,
-        },
+      // Check if the response is successful
+      if (response.data && response.data.status === "success") {
+        return response.data.data; // Return the payment data
+      } else {
+        throw { status: 400, message: response.data.message }; // Throw an error for the controller to catch
       }
-    );
-
-    if (response.data.error === 'ok') {
-      return response.data.result; // Contains supported coins
-    } else {
-      console.error('Error fetching supported coins:', response.data.error);
-      return null;
-    }
-  } catch (error) {
-    console.error('Error fetching supported coins:', error.message);
-    return null;
-  }
-};
-
-// Function to create a new payment
-export const createNewPayment = async ({ amount, currency1, currency2, buyer_email }) => {
-  const params = {
-    version: 1,
-    cmd: 'create_transaction',
-    key: PUBLIC_KEY,
-    amount,
-    currency1,
-    currency2,
-    buyer_email,
-    ipn_url: 'https://your-ipn-url.com', // Update this with your IPN URL
-    format: 'json',
-  };
-
-  const hmac = createHMAC(params);
-
-  try {
-    const response = await axios.post(
-      'https://www.coinpayments.net/api.php',
-      qs.stringify(params),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'HMAC': hmac,
-        },
+    } catch (error) {
+      // Handle different types of errors
+      if (error.response) {
+        // Server responded with a status other than 200 range
+        throw { status: error.response.status, message: error.response.data.message || error.message };
+      } else if (error.request) {
+        // Request was made but no response was received
+        throw { status: 500, message: "No response received from server." };
+      } else {
+        // Something happened in setting up the request
+        throw { status: 500, message: error.message };
       }
-    );
-
-    if (response.data.error === 'ok') {
-      return response.data.result; // Contains payment details (like transaction ID, amount, etc.)
-    } else {
-      console.error('Error creating payment:', response.data.error);
-      return null;
     }
-  } catch (error) {
-    console.error('Error creating payment:', error.message);
-    return null;
-  }
+  },
 };
+
+export default paymentService;

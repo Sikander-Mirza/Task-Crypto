@@ -13,6 +13,9 @@ const authrepo={
     },
     delete: async(id)=>{
       return await AuthModel.findByIdAndDelete(id)
+    },
+    update: async(id,data)=>{
+      return await AuthModel.findByIdAndUpdate(id,data)
     }
   
 }

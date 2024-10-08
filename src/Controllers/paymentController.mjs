@@ -1,40 +1,28 @@
-import { createNewPayment } from '../Services/paymentService.mjs';
-import { getSupportedCoins } from '../Services/paymentService.mjs';
+import paymentService from "../Services/paymentService.mjs";
 
-export const createPayment = async (req, res) => {
-  const { amount, currency1, currency2, buyer_email } = req.body;
+const paymentController = {
+  createPayment: async (req, res) => {
+    const { amount, currency, order_id, order_name } = req.body;
 
-  try {
-    // Fetch supported coins
-    const supportedCoins = await getSupportedCoins();
-
-    // Check if the requested coin is supported
-    if (!supportedCoins || !supportedCoins[currency2]) {
-      return res.status(400).json({
-        message: "Error creating payment",
-        error: `The currency '${currency2}' is not supported by the receiver.`,
-      });
+    // Validate required parameters
+    if (!amount || !currency || !order_id || !order_name) {
+      return res.status(400).json({ message: "Amount, currency, order_id, and order_name are required." });
     }
 
-    // Call service to create the payment
-    const paymentResult = await createNewPayment({ amount, currency1, currency2, buyer_email });
-
-    // If payment creation is successful
-    if (paymentResult) {
-      return res.status(200).json({
+    try {
+      const result = await paymentService.createPayment(amount, currency, order_id, order_name);
+      res.status(200).json({
         message: "Payment created successfully",
-        result: paymentResult,
+        result,
       });
-    } else {
-      return res.status(400).json({
-        message: "Error creating payment",
-        error: "Payment creation failed",
+    } catch (error) {
+      console.error("Error details:", error.message);
+      res.status(error.status || 500).json({
+        message: "Internal server error",
+        error: error.message,
       });
     }
-  } catch (error) {
-    return res.status(500).json({
-      message: "Internal server error",
-      error: error.message,
-    });
-  }
+  },
 };
+
+export default paymentController;

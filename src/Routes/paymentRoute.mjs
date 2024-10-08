@@ -1,9 +1,7 @@
-import { createPayment } from "../Controllers/paymentController.mjs";  
+import paymentController from "../Controllers/paymentController.mjs";
 
-const Routes =async(app) => {
-    
-app.post("/create-payment",createPayment)
-
+const Routes = (app) => {
+  app.post("/create-payment", paymentController.createPayment);
 };
 
-export default Routes;  
+export default Routes;

@@ -13,6 +13,9 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  status:{
+    type:Boolean
+  }
 });
 
 // Creating the Product model from the schema
