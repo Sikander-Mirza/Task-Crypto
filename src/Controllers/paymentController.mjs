@@ -23,6 +23,19 @@ const paymentController = {
       });
     }
   },
+  createsecond : async(req,res)=>{
+    const { amount, order_id } = req.body;
+
+
+
+    try {
+        const result = await paymentService.secondPayment(amount,order_id);
+        res.json(result);
+    } catch (error) {
+        console.error('Payment creation failed:', error);
+        res.status(500).json({ error: 'Payment creation failed' });
+    }
+  }
 };
 
 export default paymentController;
