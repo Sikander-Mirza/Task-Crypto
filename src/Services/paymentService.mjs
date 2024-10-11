@@ -8,7 +8,7 @@ const API_KEY = 'nRt04gZqgkmWO1ywxMuTSURILovYxSV1ZNI6lu3ZbpdiIJ9eSH5ech36qmorT_U
 class Zerocryptopay {
     constructor() {
         this.baseApi = 'https://zerocryptopay.com';
-        this.validatedIpsWebhook = ['194.113.233.9', '176.124.192.233','54.196.228.198','3.94.85.205'];
+        this.validatedIpsWebhook = [];
         this.secretKey = '7BcGE87o6kD52P641CCPo1z9Q28urN8dRF2';
         this.token = 's8kl3tFbRI9ybswv482vq2N78W8qrIBz7ns';
         this.login = 'sikandersunny2017@gmail.com';
