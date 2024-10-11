@@ -8,7 +8,7 @@ import paymentRoutes from "./Routes/paymentRoute.mjs"
 const app = express();
 
 
-app.use(cors({ origin: "https://frontend-iota-dun-57.vercel.app" }));  
+app.use(cors({ origin: "*" }));  
 app.use(express.json());        
 app.use(express.urlencoded({ extended: true }));  
 
