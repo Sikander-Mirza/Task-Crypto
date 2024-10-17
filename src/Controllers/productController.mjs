@@ -1,22 +1,36 @@
+// import {cloudinary}  from "../Services/ImageService.mjs";
 import productrepo from "../Repository/productRepo.mjs";
 
-    const Product={
-
-
-    // Admin creation function
+  const Product={
     createproduct: async (req, res) => {
-        try {
-            const data = req.body;
-console.log(data)
-            // Check if admin with the same username or email already exists
-            const product = await productrepo.save(data)
-
-            return res.status(201).json(product);  // Return the created admin with a 201 status
-        } catch (error) {
-            console.error('Error during admin creation:', error);
-            return res.status(500).json({ message: "Server error" });
+      try {
+        console.log('Request Body:', req.body); // Ensure you're receiving the correct form-data
+        console.log('Uploaded File:', req.file); // Check if the file was uploaded
+  
+        if (!req.file) {
+          return res.status(400).json({ message: 'Image upload failed' });
         }
+  
+        const productData = {
+          ...req.body,               // Spread the form data into the product data
+          imageurl: req.file.path,    // Cloudinary returns the file path (URL)
+        };
+  
+        console.log('Product Data:', productData); // Verify the data you're about to save
+  
+        // Simulating database operation (use your actual model's create method)
+        const product = await productrepo.save(productData);
+  
+        return res.status(201).json(product);
+      } catch (error) {
+        console.error('Error during product creation:', error); // Log the full error
+        return res.status(500).json({
+          message: 'Server error',
+          error: error.message, // Provide a useful error message
+        });
+      }
     },
+      
 
     GetProducts: async(req,res)=>{
 

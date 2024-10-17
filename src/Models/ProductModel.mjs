@@ -5,16 +5,22 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  priceRub: {
-    type: Number,
+  pricerub: {
+    type: String,
     required: true,
   },
-  priceUsd: {
-    type: Number,
+  priceusd: {
+    type: String,
     required: true,
   },
   status:{
     type:Boolean
+  },
+  imageurl:{
+    type:String
+  },
+  description:{
+    type:String
   }
 });
 

@@ -5,12 +5,14 @@ import authRoutes from "./Routes/authRoute.mjs";
 import productRoutes from "./Routes/productRoute.mjs"
 import stockRoutes from "./Routes/stockRoute.mjs"
 import paymentRoutes from "./Routes/paymentRoute.mjs"
+import bodyParser from "body-parser";
 const app = express();
 
 
 app.use(cors({ origin: "*" }));  
 app.use(express.json());        
 app.use(express.urlencoded({ extended: true }));  
+app.use(bodyParser.json());
 
 productRoutes(app);
 authRoutes(app);
