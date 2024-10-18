@@ -6,6 +6,7 @@ import productRoutes from "./Routes/productRoute.mjs"
 import stockRoutes from "./Routes/stockRoute.mjs"
 import paymentRoutes from "./Routes/paymentRoute.mjs"
 import bodyParser from "body-parser";
+import orderRoutes from "./Routes/orderRoute.mjs"
 const app = express();
 
 
@@ -18,6 +19,7 @@ productRoutes(app);
 authRoutes(app);
 stockRoutes(app);
 paymentRoutes(app)
+app.use('/api', orderRoutes);
 
 
 app.get("/", (req, res) => {

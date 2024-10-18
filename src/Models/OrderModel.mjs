@@ -1,50 +1,46 @@
-import { DataTypes } from "sequelize";
-import sequelize from "../Infractructure/db.mjs";
+import mongoose from 'mongoose';
 
-const OrderModel = sequelize.define("Order", {
-  id: {
-    type: DataTypes.INTEGER,  // Integer type for ID
-    autoIncrement: true,  // Auto-increment the ID
-    primaryKey: true  // Set as primary key
+const orderSchema = new mongoose.Schema({
+  ProductId: {
+    type: Number,  // Integer type for ID
+    autoIncrement: true,  // Mongoose doesn’t support auto-increment by default, use a plugin for this like mongoose-sequence
+    primaryKey: true  // Mongoose automatically generates an _id field; this field may not be necessary
   },
-  Type: {
-    type: DataTypes.STRING, 
-    allowNull: false, 
-  },
+  
   Date: {
-    type: DataTypes.DATE, 
-    allowNull: false, 
+    type: Date,
+    required: true, // Equivalent to allowNull: false
   },
-  product:{
-type:DataTypes.STRING
+  Imageurl:{
+    type:String
   },
-  Amount: {
-    type: DataTypes.DECIMAL, // Updated to DECIMAL for better handling of monetary values
+  Product: {
+    type: String
   },
+  
   Price: {
-    type: DataTypes.DECIMAL, // Updated to DECIMAL for better handling of monetary values
+    type: mongoose.Schema.Types.Decimal128,  // Mongoose uses Decimal128 for precise decimal numbers
   },
-  Cost: {
-    type: DataTypes.DECIMAL, // Updated to DECIMAL for better handling of monetary values
-  },
+  
   Email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true  // Enforce unique constraint
+    type: String,
+    required: true,
   },
-  Payment: {
-    type: DataTypes.STRING,
+  
+  Name: {
+    type: String // Add this field as a String
   },
-  Currency: {
-    type: DataTypes.STRING,
+  
+  phone: {
+    type: String // Add this field as a String
   },
-  PayCost: {
-    type: DataTypes.DECIMAL, // Updated to DECIMAL for better handling of monetary values
-  },
+  
   Status: {
-    type: DataTypes.ENUM,
-    values: ["paid", "unpaid"], 
-  },
+    type: String,
+    enum: ["paid", "unpaid"],  // Enum equivalent in Mongoose
+  }
 });
 
-export default OrderModel;
+// Exporting the Mongoose model
+const Order = mongoose.model('Order', orderSchema);
+export default Order;

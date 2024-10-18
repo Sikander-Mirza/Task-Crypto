@@ -35,7 +35,7 @@ const Routes = async (app) => {
     app.get("/getproducts", Product.GetProducts);
     app.get("/getsingle/:id", Product.getsingle);
     app.delete("/deleteproducts/:id", Product.deleteProduct);
-    app.put("/updateproduct/:id", Product.updateProduct);
+    app.put("/updateproduct/:id",upload.single('image'), Product.updateProduct);
 
 
 
