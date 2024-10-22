@@ -76,8 +76,15 @@ catch(error){
         try{
 
             const {id}=req.params
-
-            const user=await productrepo.update(id,req.body)
+            if (!req.file) {
+                return res.status(400).json({ message: 'Image upload failed' });
+              }
+        
+              const productData = {
+                ...req.body,               // Spread the form data into the product data
+                imageurl: req.file.path,    // Cloudinary returns the file path (URL)
+              };
+            const user=await productrepo.update(id,productData)
 
             if(!user){
 
