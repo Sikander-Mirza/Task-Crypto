@@ -37,7 +37,9 @@ app.use('/api/bank', bankRoutes);
 // app.use('/api/notifications', notificationRoutes);
 // app.use('/api/admin', adminRoutes);
 
-
+app.get("/", (req, res) => {
+  res.send("hello world");
+});
 
 const start = () => {
   connectDB()  
