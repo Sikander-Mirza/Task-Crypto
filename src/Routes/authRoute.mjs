@@ -1,13 +1,14 @@
-import auth from "../Controllers/authController.mjs";  
+import express from 'express';
+import { register, login, getProfile, updateProfile, logout } from '../Controllers/authController.mjs';
+import authMiddleware from '../Middleware/authMiddleware.mjs';
 
-const Routes =async(app) => {
-    
-    app.post("/login",auth.login);  
-    app.post("/create", auth.create); 
-    app.post("/check-role",auth.verify)
-    app.put("/updateuser/:id",auth.updateuser)
-    app.get("/getusers",auth.GetUsers)
-    app.delete("/deleteusers/:id",auth.deleteuser)
-};
+const router = express.Router();
 
-export default Routes;  
+// Auth Routes
+router.post('/register', register);
+router.post('/login', login);
+router.get('/profile', authMiddleware, getProfile);
+router.put('/update-profile', authMiddleware, updateProfile);
+router.post('/logout', authMiddleware, logout);
+
+export default router;

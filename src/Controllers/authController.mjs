@@ -1,132 +1,122 @@
-import AuthModel from '../Models/AuthModel.mjs';
-import authservice from '../Services/authService.mjs';
-import authrepo from '../Repository/authRepo.mjs';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import User from '../Models/AuthModel.mjs';
 
-    const auth={
-     login : async (req, res) => {
-        try {
-           
-            const { username, password } = req.body;
-            const token = await authservice.loginAdmin({ username, password });
-  
-            if (token) {
-                return res.status(200).json({ token });
-            } else {
-                return res.status(404).json({ message: "Invalid username or password" });
-            }
-        } catch (error) {
-            console.error('Error during admin login:', error);
-            return res.status(500).json({ message: "Server error" });
-        }
-    },
+// Register User
+export const register = async (req, res) => {
+    try {
+        const { name, email, phone_number, password } = req.body;
 
-    // Admin creation function
-    create: async (req, res) => {
-        try {
-            const data = req.body;
-console.log(data)
-            // Check if admin with the same username or email already exists
-            const existingAdmin = await AuthModel.findOne({ $or: [{ username: data.username }, { email: data.email }] });
-            console.log('existingAdmin:', existingAdmin);
-            if (existingAdmin) {
-                return res.status(400).json({ message: 'Username or email already exists' });
-            }
-
-            // Create the new admin user
-            const admin = new AuthModel(data);
-            await admin.save();
-
-            return res.status(201).json(admin);  // Return the created admin with a 201 status
-        } catch (error) {
-            console.error('Error during admin creation:', error);
-            return res.status(500).json({ message: "Server error" });
-        }
-    },
-    verify: async (req, res) => {
-        try {
-            // Get the token from the Authorization header
-            const authHeader = req.headers['authorization'];
-            const token = authHeader && authHeader.split(' ')[1]; // Get the token after 'Bearer'
-            
-            console.log('Extracted Token:', token);  // Log the token for debugging
-    
-            if (!token) {
-                return res.status(403).json({ message: 'Token is required' });
-            }
-    
-            // Verify the token using authservice
-            const valid = await authservice.checktoken(token);  // Pass token as a string
-    
-            if (valid) {
-                return res.status(200).json({ valid });
-            } else {
-                return res.status(401).json({ message: 'Token is invalid or expired' });
-            }
-        } catch (error) {
-            console.error('Error during token verification:', error);
-            return res.status(500).json({ message: "Server error" });
-        }
-    },
-    GetUsers: async(req,res)=>{
-
-        try{
-
-            const users = await authrepo.show()
-            if(!users){
-
-                return res.status(404).json({message:"No users found"})
-            }
-            return res.status(200).json(users)
-
-        }catch(error){
-
-            console.log(error)
-
-        }
-    },
-    deleteuser:async(req,res)=>{
-try{
-        const {id}=req.params
-
-        const user=await authrepo.delete(id)
-
-        if(!user){
-
-            return res.status(404).json({message:"User not found"})
-
+        // Check if user exists
+        const existingUser = await User.findOne({ $or: [{ email }, { phone_number }] });
+        if (existingUser) {
+            return res.status(400).json({ message: "User already exists with this email or phone number" });
         }
 
-        return res.status(200).json({message:"User deleted successfully"})
-}
-catch(error){
+        // Hash Password
+        const salt = await bcrypt.genSalt(10);
+        const password_hash = await bcrypt.hash(password, salt);
 
-    console.log(error)
-    return res.status(500).json({message:"internal server error"})
+        // Create user
+        const user = await User.create({
+            name,
+            email,
+            phone_number,
+            password_hash,
+        });
 
+        res.status(201).json({ message: "User registered successfully", userId: user._id });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error during registration" });
+    }
+};
 
-}    
+// Login User
+export const login = async (req, res) => {
+    try {
+        const { emailOrPhone, password } = req.body;
 
-    },
-    updateuser: async(req,res)=>{
-        try{
-            const id= req.params.id;
-            const data = req.body;
-            const user = await authrepo.update(id, data)
-            if(!user){
-                return res.status(404).json({message:"User not found"})
-                }
-                return res.status(200).json({message:"User updated successfully"})
-                }
-                catch(error){
-                    console.log(error)
-                    return res.status(500).json({message:"internal server error"})
-                }
-            }
+        const user = await User.findOne({ 
+            $or: [
+                { email: emailOrPhone }, 
+                { phone_number: emailOrPhone }
+            ]
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid credentials" });
         }
-    
 
-    
-    
+        const isMatch = await bcrypt.compare(password, user.password_hash);
 
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
 
-export default auth;
+        const token = jwt.sign({ userId: user._id }, 'myrandomdevsecretkey12345', { expiresIn: '7d' });
+
+        res.json({ 
+            token, 
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                phone_number: user.phone_number,
+                balance: user.balance,
+                kyc_status: user.kyc.status
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error during login" });
+    }
+};
+
+// Get Profile
+export const getProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            phone_number: user.phone_number,
+            balance: user.balance,
+            kyc_status: user.kyc.status,
+            linked_bank_accounts: user.linked_bank_accounts
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error during profile fetch" });
+    }
+};
+
+// Update Profile
+export const updateProfile = async (req, res) => {
+    try {
+        const { name, email, phone_number } = req.body;
+
+        const user = await User.findByIdAndUpdate(
+            req.userId,
+            { name, email, phone_number, updated_at: Date.now() },
+            { new: true }
+        );
+
+        res.json({ message: "Profile updated successfully", user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error during profile update" });
+    }
+};
+
+// Logout User
+export const logout = async (req, res) => {
+    // Logout handled on client side by deleting token
+    res.json({ message: "Logged out successfully" });
+};
