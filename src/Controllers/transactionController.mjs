@@ -5,7 +5,9 @@ import mongoose from 'mongoose';
 // Transfer to another user
 export const sendTransfer = async (req, res) => {
     try {
-        const { recipient_id, amount, description } = req.body;
+        const { recipient_id, description } = req.body;
+const amount = Number(req.body.amount);
+
 
         if (!recipient_id || !amount) {
             return res.status(400).json({ message: "Recipient ID and amount required" });
@@ -13,20 +15,24 @@ export const sendTransfer = async (req, res) => {
 
         const sender = await User.findById(req.userId);
         const recipient = await User.findById(recipient_id);
+console.log(sender)
+console.log(recipient)
+const senderBank = sender.linked_bank_accounts[0];
+const recipientBank = recipient.linked_bank_accounts[0];
 
-        if (!recipient) {
-            return res.status(404).json({ message: "Recipient not found" });
-        }
+if (senderBank.balance < amount) {
+  return res.status(400).json({ message: "Insufficient balance" });
+}
 
-        if (sender.balance < amount) {
-            return res.status(400).json({ message: "Insufficient balance" });
-        }
+// Update balances
+senderBank.balance -= amount;
+recipientBank.balance += amount;
 
-        // Deduct from sender, add to recipient
-        sender.balance -= amount;
-        recipient.balance += amount;
-        await sender.save();
-        await recipient.save();
+console.log(senderBank.balance)
+console.log(recipientBank.balance)
+await sender.save();
+await recipient.save();
+
 
         // Create transactions for both users
         await Transaction.create({
