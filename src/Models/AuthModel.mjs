@@ -16,11 +16,13 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   phone_number: { type: String, required: true, unique: true },
   password_hash: { type: String, required: true },
+  isAdmin: { type: Boolean, default: false },
+
   kyc: {
     status: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
     document_type: { type: String },
     document_number: { type: String },
-    document_photo_url: { type: String },
+    document_photo_url: [{ type: String }],
     verified_at: { type: Date }
   },
   linked_bank_accounts: [linkedBankAccountSchema],

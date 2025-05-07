@@ -5,7 +5,7 @@ import User from '../Models/AuthModel.mjs';
 // Register User
 export const register = async (req, res) => {
     try {
-        const { name, email, phone_number, password } = req.body;
+        const { name, email, phone_number, password, isAdmin } = req.body;
 
         // Check if user exists
         const existingUser = await User.findOne({ $or: [{ email }, { phone_number }] });
@@ -22,6 +22,7 @@ export const register = async (req, res) => {
             name,
             email,
             phone_number,
+            isAdmin: isAdmin || false, // optional
             password_hash,
         });
 
