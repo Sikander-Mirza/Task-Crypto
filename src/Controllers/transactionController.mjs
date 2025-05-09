@@ -4,72 +4,83 @@ import mongoose from 'mongoose';
 
 // Transfer to another user
 export const sendTransfer = async (req, res) => {
-    try {
-      const { amount, recipient_account_number, description } = req.body;
-      const senderId = req.userId;
-      const numericAmount = Number(amount);
-  
-      if (!recipient_account_number || !numericAmount) {
-        return res.status(400).json({ message: "Recipient account number and amount are required." });
-      }
-  
-      const sender = await User.findById(senderId);
-      if (!sender) return res.status(404).json({ message: "Sender not found" });
-  
-      const senderBank = sender.linked_bank_accounts[0]; // assumes only one account linked
-      if (senderBank.balance < numericAmount) {
-        return res.status(400).json({ message: "Insufficient balance" });
-      }
-  
-      // 🧠 Find recipient user by bank account number
-      const recipient = await User.findOne({
-        "linked_bank_accounts.account_number": recipient_account_number
-      });
-  
-      if (!recipient) {
-        return res.status(404).json({ message: "Recipient not found with provided account number" });
-      }
-  
-      const recipientBank = recipient.linked_bank_accounts.find(
-        acc => acc.account_number === recipient_account_number
-      );
-  
-      if (!recipientBank) {
-        return res.status(404).json({ message: "Recipient bank account not found" });
-      }
-  
-      // 💸 Transfer balance
-      senderBank.balance -= numericAmount;
-      recipientBank.balance += numericAmount;
-  
-      await sender.save();
-      await recipient.save();
-  
-      // 📄 Log transactions
-      await Transaction.create({
-        user_id: sender._id,
-        amount: numericAmount,
-        type: "send",
-        status: "completed",
-        description,
-        related_user_id: recipient._id,
-      });
-  
-      await Transaction.create({
-        user_id: recipient._id,
-        amount: numericAmount,
-        type: "receive",
-        status: "completed",
-        description: `Received from ${sender.name}`,
-        related_user_id: sender._id,
-      });
-  
-      res.json({ message: "Transfer successful" });
-    } catch (error) {
-      console.error("Transfer Error:", error.message);
-      res.status(500).json({ message: "Error processing transfer" });
+  try {
+    const { amount, recipient_account_number, description, transaction_pin } = req.body;
+    console.log(transaction_pin)
+    const senderId = req.userId;
+    const numericAmount = Number(amount);
+
+    if (!recipient_account_number || !numericAmount) {
+      return res.status(400).json({ message: "All fields are required and PIN must be 4 digits." });
     }
-  };
+
+    const sender = await User.findById(senderId);
+    if (!sender) return res.status(404).json({ message: "Sender not found" });
+console.log(sender.transaction_pin)
+if (sender.transaction_pin !== Number(transaction_pin)) {
+  return res.status(403).json({ message: "Invalid PIN" });
+}
+
+
+    const senderBank = sender.linked_bank_accounts[0];
+    if (senderBank.balance < numericAmount) {
+      return res.status(400).json({ message: "Insufficient balance" });
+    }
+
+    const recipient = await User.findOne({
+      "linked_bank_accounts.account_number": recipient_account_number
+    });
+
+    if (!recipient) {
+      return res.status(404).json({ message: "Recipient not found" });
+    }
+
+    const recipientBank = recipient.linked_bank_accounts.find(
+      acc => acc.account_number === recipient_account_number
+    );
+
+    if (!recipientBank) {
+      return res.status(404).json({ message: "Recipient bank account not found" });
+    }
+console.log(recipientBank.balance)
+    // 💸 Process balances
+    senderBank.balance -= numericAmount;
+    recipientBank.balance += numericAmount;
+
+    await sender.save();
+    await recipient.save();
+
+    // 📄 Log sender transaction
+    await Transaction.create({
+      user_id: sender._id,
+      amount: numericAmount,
+      type: "send",
+      status: "completed",
+      description,
+      related_user_id: recipient._id,
+      recipient_name: recipient.name,
+      recipient_account_number: recipientBank.account_number
+    });
+
+    // 📄 Log recipient transaction
+    await Transaction.create({
+      user_id: recipient._id,
+      amount: numericAmount,
+      type: "receive",
+      status: "completed",
+      description: `Received from ${sender.name}`,
+      related_user_id: sender._id,
+      recipient_name: sender.name,
+      recipient_account_number: senderBank.account_number
+    });
+
+    res.json({ message: "Transfer successful" });
+  } catch (error) {
+    console.error("Transfer Error:", error.message);
+    res.status(500).json({ message: "Error processing transfer" });
+  }
+};
+
 
 // Withdraw to bank
 export const withdrawFunds = async (req, res) => {

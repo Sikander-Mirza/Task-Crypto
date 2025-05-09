@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 // import helmet from 'helmet';
 import connectDB from './Infractructure/db.mjs';
-
+import budgetRoutes from './Routes/budgetRoutes.mjs';
 import authRoutes from './Routes/authRoute.mjs';
 import kycRoutes from './Routes/kycRoutes.mjs';
 import transactionRoutes from './Routes/transactionRoute.mjs';
@@ -27,6 +27,7 @@ app.use(cors());
 // app.use(helmet());
 
 // Routes
+app.use('/api/budget', budgetRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/kyc', kycRoutes);
 app.use('/api/transaction', transactionRoutes);

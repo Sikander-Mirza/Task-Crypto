@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { NUMBER } from 'sequelize';
 
 const linkedBankAccountSchema = new mongoose.Schema({
   bank_account_id: mongoose.Schema.Types.ObjectId,
@@ -17,6 +18,14 @@ const userSchema = new mongoose.Schema({
   phone_number: { type: String, required: true, unique: true },
   password_hash: { type: String, required: true },
   isAdmin: { type: Boolean, default: false },
+  transaction_pin: {
+    type: Number,
+    validate: {
+      validator: value => /^\d{4}$/.test(value),
+      message: 'PIN must be a 4-digit number'
+    }
+  },
+  
 
   kyc: {
     status: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },

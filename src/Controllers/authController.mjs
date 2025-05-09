@@ -5,7 +5,7 @@ import User from '../Models/AuthModel.mjs';
 // Register User
 export const register = async (req, res) => {
     try {
-        const { name, email, phone_number, password, isAdmin } = req.body;
+        const { name, email, phone_number, password, isAdmin,transaction_pin } = req.body;
 
         // Check if user exists
         const existingUser = await User.findOne({ $or: [{ email }, { phone_number }] });
@@ -24,6 +24,7 @@ export const register = async (req, res) => {
             phone_number,
             isAdmin: isAdmin || false, // optional
             password_hash,
+            transaction_pin
         });
 
         res.status(201).json({ message: "User registered successfully", userId: user._id });
@@ -36,12 +37,12 @@ export const register = async (req, res) => {
 // Login User
 export const login = async (req, res) => {
     try {
-        const { emailOrPhone, password } = req.body;
+        const { email, password } = req.body;
 
         const user = await User.findOne({ 
             $or: [
-                { email: emailOrPhone }, 
-                { phone_number: emailOrPhone }
+                { email: email }, 
+                { phone_number: email }
             ]
         });
 
@@ -65,7 +66,7 @@ export const login = async (req, res) => {
                 email: user.email,
                 phone_number: user.phone_number,
                 balance: user.balance,
-                kyc_status: user.kyc.status
+                kyc_status: user.kyc.status,
             }
         });
     } catch (error) {
