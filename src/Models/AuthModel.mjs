@@ -23,7 +23,9 @@ const userSchema = new mongoose.Schema({
     validate: {
       validator: value => /^\d{4}$/.test(value),
       message: 'PIN must be a 4-digit number'
-    }
+    },
+    qr_code_url: { type: String }
+
   },
   
 

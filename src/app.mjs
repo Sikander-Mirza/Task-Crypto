@@ -8,6 +8,7 @@ import authRoutes from './Routes/authRoute.mjs';
 import kycRoutes from './Routes/kycRoutes.mjs';
 import transactionRoutes from './Routes/transactionRoute.mjs';
 import bankRoutes from './Routes/bankRoute.mjs';
+import qrRoutes from "./Routes/qrRoutes.mjs"
 // import utilityBillRoutes from './routes/utilityBillRoutes.js';
 // import rewardRoutes from './routes/rewardRoutes.js';
 import aiRoutes from './Routes/botRoute.mjs';
@@ -27,6 +28,7 @@ app.use(cors());
 // app.use(helmet());
 
 // Routes
+app.use("/api/qr",qrRoutes)
 app.use('/api/budget', budgetRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/kyc', kycRoutes);
