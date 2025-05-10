@@ -1,5 +1,7 @@
 import User from '../Models/AuthModel.mjs';
 import Transaction from '../Models/TransactionModel.mjs';
+import Budget from '../Models/BudgetModel.mjs';
+import { sendBudgetAlert } from '../Utils/mailer.mjs';
 import mongoose from 'mongoose';
 
 // Transfer to another user
@@ -23,6 +25,12 @@ if (sender.transaction_pin !== Number(transaction_pin)) {
 
 
     const senderBank = sender.linked_bank_accounts[0];
+    console.log("Sender:", sender);
+console.log("Linked Bank Accounts:", sender.linked_bank_accounts);
+
+    if (!senderBank) {
+      return res.status(400).json({ message: "Sender has no linked bank account" });
+    }
     if (senderBank.balance < numericAmount) {
       return res.status(400).json({ message: "Insufficient balance" });
     }
@@ -49,7 +57,32 @@ console.log(recipientBank.balance)
 
     await sender.save();
     await recipient.save();
+    const latestBudget = await Budget.findOne({ user_id: sender._id }).sort({ created_at: -1 });
 
+    if (latestBudget) {
+      const totalSpentData = await Transaction.aggregate([
+        {
+          $match: {
+            user_id: sender._id,
+            type: "send",
+            created_at: {
+              $gte: new Date(latestBudget.start_date),
+              $lte: new Date(latestBudget.end_date)
+            }
+          }
+        },
+        { $group: { _id: null, total: { $sum: "$amount" } } }
+      ]);
+    
+      const spent = totalSpentData[0]?.total || 0;
+      const percent = (spent / latestBudget.amount) * 100;
+    
+      if (percent >= 90 && percent < 100) {
+        await sendBudgetAlert(sender.email, "⚠️ Budget Warning", `You're close to exceeding your budget.\nSpent: PKR ${spent}\nLimit: PKR ${latestBudget.amount}`);
+      } else if (percent >= 100) {
+        await sendBudgetAlert(sender.email, "❌ Budget Exceeded", `You've exceeded your budget.\nSpent: PKR ${spent}\nLimit: PKR ${latestBudget.amount}`);
+      }
+    }
     // 📄 Log sender transaction
     await Transaction.create({
       user_id: sender._id,
