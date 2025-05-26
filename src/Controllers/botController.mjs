@@ -7,6 +7,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 export const queryAI = async (req, res) => {
   try {
+    console.log(req.body)
     const { user_id, question } = req.body;
 
     if (!user_id || !question) {

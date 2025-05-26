@@ -4,7 +4,7 @@ import { createBankAccount, getAllBankAccounts } from '../Controllers/bankContro
 
 const router = express.Router();
 
-router.post('/create', authMiddleware, createBankAccount);
+router.post('/create', createBankAccount);
 router.get('/accounts', authMiddleware, getAllBankAccounts);
 
 export default router;

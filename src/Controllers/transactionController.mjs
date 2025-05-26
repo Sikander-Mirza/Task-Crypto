@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 // Transfer to another user
 export const sendTransfer = async (req, res) => {
   try {
+    console.log(req.body)
     const { amount, recipient_account_number, description, transaction_pin } = req.body;
     const senderId = req.userId;
     const numericAmount = Number(amount);
@@ -106,6 +107,7 @@ console.log("Aggregation result:", totalSpentData);
 // Withdraw to bank
 export const withdrawFunds = async (req, res) => {
   try {
+    console.log(req.body)
     const { amount, bank_account_id } = req.body;
 
     if (!amount || !bank_account_id) {

@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 
 export const register = async (req, res) => {
   try {
+    console.log(req.body)
     const {
       name,
       email,
@@ -84,7 +85,8 @@ const user = await User.create({
 // Login User
 export const login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+console.log(req.body)
+      const { email, password } = req.body;
 
         const user = await User.findOne({ 
             $or: [
@@ -114,6 +116,8 @@ export const login = async (req, res) => {
                 phone_number: user.phone_number,
                 balance: user.wallet_balance,
                 kyc_status: user.kyc.status,
+                bank_account: user.linked_bank_accounts[0] || null  // ✅ Only first account or null
+
             }
         });
     } catch (error) {
