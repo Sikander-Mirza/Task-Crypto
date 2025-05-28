@@ -3,6 +3,7 @@ import Transaction from '../Models/TransactionModel.mjs';
 import Budget from '../Models/BudgetModel.mjs';
 import { sendBudgetAlert } from '../Utils/mailer.mjs';
 import mongoose from 'mongoose';
+import { startOfDay, endOfDay } from 'date-fns';
 
 // Transfer to another user
 export const sendTransfer = async (req, res) => {
@@ -42,36 +43,46 @@ export const sendTransfer = async (req, res) => {
     await sender.save();
     await recipient.save();
 
-    // 🔔 Budget logic (unchanged)
+    // ✅ Budget logic with fixed date range
     const latestBudget = await Budget.findOne({ user_id: sender._id }).sort({ created_at: -1 });
-    if (latestBudget) {
-      const totalSpentData = await Transaction.aggregate([
-        {
-          $match: {
-            user_id: sender._id,
-            type: "send",
-            created_at: {
-              $gte: new Date(latestBudget.start_date),
-              $lte: new Date(latestBudget.end_date)
-            }
-          }
-        },
-        { $group: { _id: null, total: { $sum: "$amount" } } }
-      ]);
 
-      const spent = totalSpentData[0]?.total || 0;
-      const percent = (spent / latestBudget.amount) * 100;
-console.log("Budget range:", latestBudget.start_date, latestBudget.end_date);
-console.log("Sender ID:", sender._id);
+if (latestBudget) {
+  const start = startOfDay(new Date(latestBudget.start_date));
+  const end = endOfDay(new Date(latestBudget.end_date));
 
-console.log("Aggregation result:", totalSpentData);
+  console.log("🕓 Budget Date Range:", start.toISOString(), "to", end.toISOString());
+  console.log("🕓 Now:", new Date().toISOString());
 
-      if (percent >= 90 && percent < 100) {
-        await sendBudgetAlert(sender.email, "⚠️ Budget Warning", `You're close to exceeding your budget.\nSpent: PKR ${spent}\nLimit: PKR ${latestBudget.amount}`);
-      } else if (percent >= 100) {
-        await sendBudgetAlert(sender.email, "❌ Budget Exceeded", `You've exceeded your budget.\nSpent: PKR ${spent}\nLimit: PKR ${latestBudget.amount}`);
+  const totalSpentData = await Transaction.aggregate([
+    {
+      $match: {
+        user_id: sender._id,
+        type: "send",
+        created_at: {
+          $gte: start,
+          $lte: end
+        }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: "$amount" }
       }
     }
+  ]);
+
+  const spent = (totalSpentData[0]?.total || 0) + numericAmount;
+  const percent = (spent / latestBudget.amount) * 100;
+
+  console.log("📊 Spent incl. current:", spent);
+
+  if (percent >= 90 && percent < 100) {
+    await sendBudgetAlert(sender.email, "⚠️ Budget Warning", `You're close to exceeding your budget.\nSpent: PKR ${spent}\nLimit: PKR ${latestBudget.amount}`);
+  } else if (percent >= 100) {
+    await sendBudgetAlert(sender.email, "❌ Budget Exceeded", `You've exceeded your budget.\nSpent: PKR ${spent}\nLimit: PKR ${latestBudget.amount}`);
+  }
+}
 
     // 🧾 Transaction logs
     await Transaction.create({
@@ -97,6 +108,7 @@ console.log("Aggregation result:", totalSpentData);
     });
 
     res.json({ message: "Transfer successful" });
+
   } catch (error) {
     console.error("Transfer Error:", error.message);
     res.status(500).json({ message: "Error processing transfer" });
