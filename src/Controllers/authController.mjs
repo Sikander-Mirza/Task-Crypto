@@ -135,14 +135,17 @@ export const getProfile = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        res.json({
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            phone_number: user.phone_number,
-            balance: user.balance,
-            kyc_status: user.kyc.status,
-            linked_bank_accounts: user.linked_bank_accounts
+        res.json({ 
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                phone_number: user.phone_number,
+                balance: user.wallet_balance,
+                kyc_status: user.kyc.status,
+                bank_account: user.linked_bank_accounts[0] || null  // ✅ Only first account or null
+
+            }
         });
     } catch (error) {
         console.error(error);
@@ -172,4 +175,15 @@ export const updateProfile = async (req, res) => {
 export const logout = async (req, res) => {
     // Logout handled on client side by deleting token
     res.json({ message: "Logged out successfully" });
+};
+
+// Get All Users - For AI chatbot recipient resolution
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({}, 'name _id email phone_number linked_bank_accounts');
+    res.json(users);
+  } catch (err) {
+    console.error("Error fetching users:", err.message);
+    res.status(500).json({ message: "Server error fetching users" });
+  }
 };
