@@ -14,7 +14,7 @@ import qrRoutes from "./Routes/qrRoutes.mjs"
 import aiRoutes from './Routes/botRoute.mjs';
 // import notificationRoutes from './routes/notificationRoutes.js';
 import adminRoutes from './Routes/adminRoutes.mjs';
-
+import recipientRouters from './Routes/recipientRoutes.mjs';
 // dotenv.config();
 
 // Connect Database
@@ -28,6 +28,7 @@ app.use(cors());
 // app.use(helmet());
 
 // Routes
+app.use("/api/recipient",recipientRouters)
 app.use("/api/qr",qrRoutes)
 app.use('/api/budget', budgetRoutes);
 app.use('/api/auth', authRoutes);
