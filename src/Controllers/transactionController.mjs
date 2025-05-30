@@ -10,6 +10,7 @@ export const sendTransfer = async (req, res) => {
   try {
     console.log(req.body)
     const { amount, recipient_account_number, description, transaction_pin } = req.body;
+    
     const senderId = req.userId;
     const numericAmount = Number(amount);
 
